@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS = -std=c99 -O2 -I$(HOME)/repos/others/cglm/include
+CFLAGS = -std=c99 -O2
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lm
 
 default: test

@@ -43,7 +43,7 @@ bool checkValidationLayerSupport() {
 
     // displayAvailableLayers(availableLayerCount, availableLayers);
 
-    for (uint32_t i; i < validationLayerCount; i++) {
+    for (uint32_t i = 0; i < validationLayerCount; i++) {
         bool layerFound = false;
 
         for (uint32_t j = 0; j < availableLayerCount; j++) {
@@ -987,12 +987,12 @@ void recordCommandBuffer(VkCommandBuffer commandBuffer, VkRenderPass renderPass,
 }
 
 void createSemaphores(VkDevice device, VkSemaphore *semaphores,
-                      uint32_t semaphoresCound) {
+                      uint32_t semaphoresCount) {
     VkSemaphoreCreateInfo semaphoreInfo = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
     };
 
-    for (u_int32_t i; i < semaphoresCound; i++) {
+    for (uint32_t i = 0; i < semaphoresCount; i++) {
         if (vkCreateSemaphore(device, &semaphoreInfo, NULL, &semaphores[i]) !=
             VK_SUCCESS) {
             fprintf(stderr, "ERROR: failed to create semaphore.\n");
@@ -1020,14 +1020,23 @@ void draw(VkDevice device, VkCommandBuffer commandBuffer,
           VkPipeline graphicsPipeline, VkQueue graphicsQueue,
           VkQueue presentQueue, VkRenderPass renderPass, VkExtent2D extent,
           VkFence inFlightFence, VkSemaphore imageAvailableSemaphore,
-          VkSemaphore renderFinishedSemaphore) {
+          VkSemaphore *renderFinishedSemaphores, VkFence *imagesInFlight) {
 
     vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
-    vkResetFences(device, 1, &inFlightFence);
 
     uint32_t imageIndex;
     vkAcquireNextImageKHR(device, swapchain, UINT64_MAX,
                           imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+
+    // Wait if a previous frame is using this image
+    if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
+        vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE,
+                        UINT64_MAX);
+    }
+    // Mark this image as being used by this frame's fence
+    imagesInFlight[imageIndex] = inFlightFence;
+
+    vkResetFences(device, 1, &inFlightFence);
     vkResetCommandBuffer(commandBuffer, 0);
     recordCommandBuffer(commandBuffer, renderPass,
                         swapchainFramebuffers[imageIndex], graphicsPipeline,
@@ -1037,7 +1046,7 @@ void draw(VkDevice device, VkCommandBuffer commandBuffer,
     VkPipelineStageFlags waitStages[] = {
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-    VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
+    VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[imageIndex]};
 
     VkSubmitInfo submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -1137,18 +1146,24 @@ int main() {
 
     VkCommandPool commandPool = createCommandPool(device, physicalDevice);
 
+    VkSemaphore imageAvailableSemaphores[MAX_FRAMES_IN_FLIGHT];
+    createSemaphores(device, imageAvailableSemaphores, MAX_FRAMES_IN_FLIGHT);
+
+    VkSemaphore renderFinishedSemaphores[imageCount];
+    createSemaphores(device, renderFinishedSemaphores, imageCount);
+
+    VkFence inFlightFences[MAX_FRAMES_IN_FLIGHT];
+    createFence(device, inFlightFences, MAX_FRAMES_IN_FLIGHT);
+
     VkCommandBuffer commandBuffers[MAX_FRAMES_IN_FLIGHT];
     createCommandBuffers(device, commandPool, commandBuffers,
                          MAX_FRAMES_IN_FLIGHT);
 
-    VkSemaphore imageAvailableSemaphores[MAX_FRAMES_IN_FLIGHT];
-    createSemaphores(device, imageAvailableSemaphores, MAX_FRAMES_IN_FLIGHT);
-
-    VkSemaphore renderFinishedSemaphores[MAX_FRAMES_IN_FLIGHT];
-    createSemaphores(device, renderFinishedSemaphores, MAX_FRAMES_IN_FLIGHT);
-
-    VkFence inFlightFences[MAX_FRAMES_IN_FLIGHT];
-    createFence(device, inFlightFences, MAX_FRAMES_IN_FLIGHT);
+    // Tracks which fence each swapchain image is using
+    VkFence imagesInFlight[imageCount];
+    for (uint32_t i = 0; i < imageCount; i++) {
+        imagesInFlight[i] = VK_NULL_HANDLE;
+    }
 
     uint32_t currentFrame = 0;
 
@@ -1159,8 +1174,8 @@ int main() {
         draw(device, commandBuffers[currentFrame], swapchain,
              swapchainFramebuffers, graphicsPipeline, graphicsQueue,
              presentQueue, renderPass, extent, inFlightFences[currentFrame],
-             imageAvailableSemaphores[currentFrame],
-             renderFinishedSemaphores[currentFrame]);
+             imageAvailableSemaphores[currentFrame], renderFinishedSemaphores,
+             imagesInFlight);
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
@@ -1170,9 +1185,12 @@ int main() {
 
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroySemaphore(device, imageAvailableSemaphores[i], NULL);
-        vkDestroySemaphore(device, renderFinishedSemaphores[i], NULL);
         vkDestroyFence(device, inFlightFences[i], NULL);
-    };
+    }
+
+    for (uint32_t i = 0; i < imageCount; i++) {
+        vkDestroySemaphore(device, renderFinishedSemaphores[i], NULL);
+    }
 
     vkDestroyCommandPool(device, commandPool, NULL);
 
