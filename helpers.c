@@ -8,16 +8,14 @@
 void displayInstanceExtensions() {
     uint32_t extensionCount = 0;
 
-    if (vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, NULL) !=
-        VK_SUCCESS) {
+    if (vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, NULL) != VK_SUCCESS) {
         fprintf(stderr, "ERROR: failed to query extensions\n");
         exit(1);
     }
 
     VkExtensionProperties extensions[extensionCount];
 
-    if (vkEnumerateInstanceExtensionProperties(NULL, &extensionCount,
-                                               extensions) != VK_SUCCESS) {
+    if (vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, extensions) != VK_SUCCESS) {
         fprintf(stderr, "ERROR: failed to query extensions\n");
         exit(1);
     }
@@ -37,8 +35,7 @@ void displayRequiredInstanceExtensions(uint32_t extensionCount, const char **ext
     fprintf(stdout, "\n");
 }
 
-void displayAvailableLayers(uint32_t availableLayerCount,
-                            VkLayerProperties *availableLayers) {
+void displayAvailableLayers(uint32_t availableLayerCount, VkLayerProperties *availableLayers) {
     fprintf(stdout, "There are %d avaiable layers:\n", availableLayerCount);
     for (uint32_t i; i < availableLayerCount; i++) {
         fprintf(stdout, "\t%s\n", availableLayers[i].layerName);
@@ -46,8 +43,7 @@ void displayAvailableLayers(uint32_t availableLayerCount,
     fprintf(stdout, "\n");
 }
 
-void displayAvailableExtensions(uint32_t availableExtensionCount,
-                            VkExtensionProperties *availableExtensions) {
+void displayAvailableExtensions(uint32_t availableExtensionCount, VkExtensionProperties *availableExtensions) {
     fprintf(stdout, "There are %d avaiable layers:\n", availableExtensionCount);
     for (uint32_t i; i < availableExtensionCount; i++) {
         fprintf(stdout, "\t%s\n", availableExtensions[i].extensionName);
@@ -70,11 +66,11 @@ void displayDevices(VkPhysicalDevice *devices, uint32_t deviceCount) {
     }
 }
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
 
 /**
@@ -98,7 +94,8 @@ void displayDevices(VkPhysicalDevice *devices, uint32_t deviceCount) {
  *
  */
 void *mmap_file_read(const char *path, size_t *size_out) {
-    if (!path || !size_out) return NULL;
+    if (!path || !size_out)
+        return NULL;
 
     int fd = open(path, O_RDONLY);
     if (fd == -1) {
@@ -127,5 +124,3 @@ void *mmap_file_read(const char *path, size_t *size_out) {
     *size_out = (size_t)st.st_size;
     return mapped;
 }
-
-
