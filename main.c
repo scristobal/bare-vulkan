@@ -98,7 +98,7 @@ debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
               const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
               void *pUserData) {
 
-    fprintf(stderr, "validation layer: %s\n", pCallbackData->pMessage);
+    fprintf(stderr, "%s\n", pCallbackData->pMessage);
 
     return VK_FALSE;
 }
@@ -353,7 +353,7 @@ VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface) {
         exit(1);
     }
 
-    fprintf(stdout, "using ");
+    fprintf(stdout, "Using ");
     displayDevice(&physicalDevice);
 
     return physicalDevice;
