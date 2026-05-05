@@ -296,7 +296,8 @@ bool isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface) {
     VkPhysicalDeviceProperties deviceProps;
     vkGetPhysicalDeviceProperties(device, &deviceProps);
 
-    if (deviceProps.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+    if (deviceProps.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+        deviceProps.deviceType != VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
         return false;
 
     if (!checkDeviceExtensionSupport(device)) {

@@ -1,6 +1,6 @@
 CC ?= gcc
-CFLAGS = -std=c99 -O2
-LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
+CFLAGS = -std=c99 -O2 -I$(HOME)/repos/others/cglm/include
+LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lm
 
 default: test
 
