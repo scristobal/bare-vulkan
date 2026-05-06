@@ -41,7 +41,7 @@ bool checkValidationLayerSupport() {
     VkLayerProperties availableLayers[availableLayerCount];
     vkEnumerateInstanceLayerProperties(&availableLayerCount, availableLayers);
 
-    // displayAvailableLayers(availableLayerCount, availableLayers);
+    displayAvailableLayers(availableLayerCount, availableLayers);
 
     for (uint32_t i = 0; i < validationLayerCount; i++) {
         bool layerFound = false;
@@ -68,7 +68,7 @@ bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
     VkExtensionProperties availableExtensions[availableExtensionCount];
     vkEnumerateDeviceExtensionProperties(device, NULL, &availableExtensionCount, availableExtensions);
 
-    // displayAvailableExtensions(availableExtensionCount, availableExtensions);
+    displayAvailableExtensions(availableExtensionCount, availableExtensions);
 
     for (uint32_t i = 0; i < deviceExtensionsCount; i++) {
         bool supported = false;
@@ -192,7 +192,7 @@ VkInstance createInstance() {
         .apiVersion = VK_API_VERSION_1_0,
     };
 
-    // displayInstanceExtensions();
+    displayInstanceExtensions();
 
     uint32_t extensionCount;
     const char **extensions = getRequiredExtensions(&extensionCount);
@@ -217,7 +217,7 @@ VkInstance createInstance() {
         createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
     }
 
-    // displayRequiredInstanceExtensions(extensionCount, extensions);
+    displayRequiredInstanceExtensions(extensionCount, extensions);
 
     VkInstance instance;
 
@@ -321,7 +321,7 @@ VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface) {
     VkPhysicalDevice devices[deviceCount];
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices);
 
-    // displayDevices(devices, deviceCount);
+    displayDevices(devices, deviceCount);
 
     for (uint32_t i = 0; i < deviceCount; i++) {
         if (isDeviceSuitable(devices[i], surface)) {
@@ -335,7 +335,6 @@ VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface) {
         exit(1);
     }
 
-    fprintf(stdout, "Using ");
     displayDevice(&physicalDevice);
 
     return physicalDevice;

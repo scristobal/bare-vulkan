@@ -56,13 +56,17 @@ void displayDevice(VkPhysicalDevice *device) {
     VkPhysicalDeviceProperties deviceProps;
     vkGetPhysicalDeviceProperties(*device, &deviceProps);
 
-    fprintf(stdout, "physical device: %s\n", deviceProps.deviceName);
+    fprintf(stdout, "Using device %s\n", deviceProps.deviceName);
 }
 
 void displayDevices(VkPhysicalDevice *devices, uint32_t deviceCount) {
+    fprintf(stdout, "There are %d available devices:\n", deviceCount);
 
     for (uint32_t i = 0; i < deviceCount; i++) {
-        displayDevice(&devices[i]);
+        VkPhysicalDeviceProperties deviceProps;
+        vkGetPhysicalDeviceProperties(devices[i], &deviceProps);
+
+        fprintf(stdout, "\t%s\n", deviceProps.deviceName);
     }
 }
 
