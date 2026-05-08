@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS = -std=c99 -O2
+CFLAGS = -DNDEBUG
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lm
 
 default: test
@@ -10,7 +10,7 @@ vert.spv: shader.vert
 frag.spv: shader.frag
 	glslc shader.frag -o frag.spv
 
-VulkanTest: main.c frag.spv vert.spv
+VulkanTest: main.c helpers.c frag.spv vert.spv
 	$(CC) $(CFLAGS) -o VulkanTest main.c $(LDFLAGS)
 
 .PHONY: test clean

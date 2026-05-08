@@ -6,8 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
-#include <sys/types.h>
 #include <vulkan/vulkan_core.h>
 
 #define GLFW_INCLUDE_VULKAN
@@ -23,9 +21,9 @@ const uint32_t HEIGHT = 600;
 const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
 #ifdef NDEBUG
-const bool enableValidationLayers = false;
-#else
 const bool enableValidationLayers = true;
+#else
+const bool enableValidationLayers = false;
 #endif
 
 const char *validationLayers[] = {"VK_LAYER_KHRONOS_validation"};
@@ -38,10 +36,19 @@ bool checkValidationLayerSupport() {
     uint32_t availableLayerCount;
     vkEnumerateInstanceLayerProperties(&availableLayerCount, NULL);
 
-    VkLayerProperties availableLayers[availableLayerCount];
+    VkLayerProperties *availableLayers = malloc(availableLayerCount * sizeof *availableLayers);
+
+    if (!availableLayers) {
+        fprintf(stderr, "ERROR: Out of memory\n");
+        exit(1);
+    }
+
     vkEnumerateInstanceLayerProperties(&availableLayerCount, availableLayers);
 
-    displayAvailableLayers(availableLayerCount, availableLayers);
+    fprintf(stdout, "Listing %d instance available layers:\n", availableLayerCount);
+    for (uint32_t i; i < availableLayerCount; i++) {
+        fprintf(stdout, "\t%s\n", availableLayers[i].layerName);
+    }
 
     for (uint32_t i = 0; i < validationLayerCount; i++) {
         bool layerFound = false;
@@ -58,6 +65,8 @@ bool checkValidationLayerSupport() {
         }
     }
 
+    free(availableLayers);
+
     return true;
 }
 
@@ -65,10 +74,13 @@ bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
     uint32_t availableExtensionCount;
     vkEnumerateDeviceExtensionProperties(device, NULL, &availableExtensionCount, NULL);
 
-    VkExtensionProperties availableExtensions[availableExtensionCount];
+    VkExtensionProperties *availableExtensions = malloc(availableExtensionCount * sizeof *availableExtensions);
     vkEnumerateDeviceExtensionProperties(device, NULL, &availableExtensionCount, availableExtensions);
 
-    displayAvailableExtensions(availableExtensionCount, availableExtensions);
+    fprintf(stdout, "Listing %d available device extensions:\n", availableExtensionCount);
+    for (uint32_t i = 0; i < availableExtensionCount; i++) {
+        fprintf(stdout, "\t%s\n", availableExtensions[i].extensionName);
+    }
 
     for (uint32_t i = 0; i < deviceExtensionsCount; i++) {
         bool supported = false;
@@ -84,6 +96,8 @@ bool checkDeviceExtensionSupport(VkPhysicalDevice device) {
             return false;
         }
     }
+
+    free(availableExtensions);
 
     return true;
 }
@@ -192,19 +206,41 @@ VkInstance createInstance() {
         .apiVersion = VK_API_VERSION_1_0,
     };
 
-    displayInstanceExtensions();
+    uint32_t extensionCount = 0;
 
-    uint32_t extensionCount;
-    const char **extensions = getRequiredExtensions(&extensionCount);
+    if (vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, NULL) != VK_SUCCESS) {
+        fprintf(stderr, "ERROR: failed to query extensions\n");
+        exit(1);
+    }
+
+    VkExtensionProperties extensions[extensionCount];
+
+    if (vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, extensions) != VK_SUCCESS) {
+        fprintf(stderr, "ERROR: failed to query extensions\n");
+        exit(1);
+    }
+
+    fprintf(stdout, "Listing %d supported instance extensions:\n", extensionCount);
+    for (uint32_t i = 0; i < extensionCount; i++) {
+        fprintf(stdout, "\t%s\n", extensions[i].extensionName);
+    }
+
+    uint32_t requiredExtensionsCount = 0;
+    const char **requiredExtensions = getRequiredExtensions(&requiredExtensionsCount);
 
     VkInstanceCreateInfo createInfo = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo = &appInfo,
-        .enabledExtensionCount = extensionCount,
-        .ppEnabledExtensionNames = extensions,
+        .enabledExtensionCount = requiredExtensionsCount,
+        .ppEnabledExtensionNames = requiredExtensions,
         .enabledLayerCount = 0,
         .pNext = NULL,
     };
+
+    fprintf(stdout, "Listing %d required instance extensions:\n", requiredExtensionsCount);
+    for (uint32_t i = 0; i < requiredExtensionsCount; i++) {
+        fprintf(stdout, "\t%s\n", requiredExtensions[i]);
+    }
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
 
@@ -216,8 +252,6 @@ VkInstance createInstance() {
 
         createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
     }
-
-    displayRequiredInstanceExtensions(extensionCount, extensions);
 
     VkInstance instance;
 
@@ -321,7 +355,14 @@ VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface) {
     VkPhysicalDevice devices[deviceCount];
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices);
 
-    displayDevices(devices, deviceCount);
+    fprintf(stdout, "Listing %d available devices:\n", deviceCount);
+
+    for (uint32_t i = 0; i < deviceCount; i++) {
+        VkPhysicalDeviceProperties deviceProps;
+        vkGetPhysicalDeviceProperties(devices[i], &deviceProps);
+
+        fprintf(stdout, "\t%s\n", deviceProps.deviceName);
+    }
 
     for (uint32_t i = 0; i < deviceCount; i++) {
         if (isDeviceSuitable(devices[i], surface)) {
@@ -335,7 +376,10 @@ VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface) {
         exit(1);
     }
 
-    displayDevice(&physicalDevice);
+    VkPhysicalDeviceProperties deviceProps;
+    vkGetPhysicalDeviceProperties(physicalDevice, &deviceProps);
+
+    fprintf(stdout, "Using device %s\n", deviceProps.deviceName);
 
     return physicalDevice;
 }
@@ -629,7 +673,7 @@ VkRenderPass createRenderPass(VkDevice device, VkFormat format) {
 
 VkShaderModule createShaderModule(VkDevice device, const char *filename) {
     size_t codeCount;
-    void *code = mmap_file_read(filename, &codeCount);
+    void *code = read_file(filename, &codeCount);
     if (!code) {
         fprintf(stderr, "ERROR: failed to read %s.\n", filename);
         exit(1);
@@ -647,9 +691,7 @@ VkShaderModule createShaderModule(VkDevice device, const char *filename) {
         exit(1);
     }
 
-    if (munmap(code, codeCount) == -1) {
-        fprintf(stderr, "ERROR: failed to close %s.\n", filename);
-    }
+    free(code);
 
     return shaderModule;
 }
