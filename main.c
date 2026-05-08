@@ -45,11 +45,9 @@ bool checkValidationLayerSupport() {
 
     vkEnumerateInstanceLayerProperties(&availableLayerCount, availableLayers);
 
-    if (enableValidationLayers) {
-        fprintf(stdout, "Listing %d instance available layers:\n", availableLayerCount);
-        for (uint32_t i = 0; i < availableLayerCount; i++) {
-            fprintf(stdout, "\t%s\n", availableLayers[i].layerName);
-        }
+    fprintf(stdout, "Listing %d instance available layers:\n", availableLayerCount);
+    for (uint32_t i = 0; i < availableLayerCount; i++) {
+        fprintf(stdout, "\t%s\n", availableLayers[i].layerName);
     }
 
     for (uint32_t i = 0; i < validationLayerCount; i++) {
