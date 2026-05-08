@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS = -DNDEBUG
+CFLAGS = -O2
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lm
 
 default: test

@@ -21,9 +21,9 @@ const uint32_t HEIGHT = 600;
 const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
 #ifdef NDEBUG
-const bool enableValidationLayers = true;
-#else
 const bool enableValidationLayers = false;
+#else
+const bool enableValidationLayers = true;
 #endif
 
 const char *validationLayers[] = {"VK_LAYER_KHRONOS_validation"};
@@ -45,9 +45,11 @@ bool checkValidationLayerSupport() {
 
     vkEnumerateInstanceLayerProperties(&availableLayerCount, availableLayers);
 
-    fprintf(stdout, "Listing %d instance available layers:\n", availableLayerCount);
-    for (uint32_t i; i < availableLayerCount; i++) {
-        fprintf(stdout, "\t%s\n", availableLayers[i].layerName);
+    if (enableValidationLayers) {
+        fprintf(stdout, "Listing %d instance available layers:\n", availableLayerCount);
+        for (uint32_t i = 0; i < availableLayerCount; i++) {
+            fprintf(stdout, "\t%s\n", availableLayers[i].layerName);
+        }
     }
 
     for (uint32_t i = 0; i < validationLayerCount; i++) {
@@ -281,7 +283,7 @@ int32_t getGraphicsFamily(VkPhysicalDevice device) {
     VkQueueFamilyProperties queueFamilies[queueFamilyCount];
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies);
 
-    for (int32_t i = 0; i < queueFamilyCount; i++) {
+    for (uint32_t i = 0; i < queueFamilyCount; i++) {
         if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             return i;
         }
